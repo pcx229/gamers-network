@@ -1,0 +1,50 @@
+
+version: '3.1'
+
+services:
+
+  smtp:
+    image: namshi/smtp
+    restart: always
+    ports:
+      - 25:25
+    hostname: smtp
+    networks:
+      - gnetwork
+
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: dhgsye3gkdghwegd3ud23du
+    networks:
+      - gnetwork
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_BUILD_SERVER_URL=http://localhost
+    restart: always
+    ports:
+      - 80:80
+    environment:
+      DB_HOST: mongo:27017
+      DB_NAME: gamers_social_media
+      DB_USER: root
+      DB_PASSWORD: dhgsye3gkdghwegd3ud23du
+      SMTP_EXIST: true
+      SMTP_SERVER: smtp
+      SMTP_PORT: 25
+      SERVER_URL: http://localhost
+      CLIENT_URL: http://localhost
+    networks:
+      - gnetwork
+
+networks:
+  gnetwork:
+    driver: bridge

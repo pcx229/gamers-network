@@ -1,0 +1,2171 @@
+openapi: 3.0.0
+info:
+  title: Gamers Social Media Api
+  version: '1.0'
+servers:
+  - url: /api
+  - url: http://localhost:5000/api
+
+components:
+  schemas:
+    game:
+      type: object
+      properties:
+        appid:
+          type: integer
+        name:
+          type: string
+        release_date:
+          type: string
+        developer:
+          type: string
+        platform:
+          type: string
+        short_description:
+          type: string
+        image:
+          type: string
+    room:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        creator:
+          type: string
+        game:
+          type: string
+        platform:
+          type: string
+        description:
+          type: string
+        members:
+          type: number
+        private:
+          type: string
+    profile:
+      type: object
+      properties:
+        _id:
+          type: string
+        userId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        image:
+          type: string
+        birth:
+          type: string
+        country:
+          type: string
+        status:
+          type: string
+    notification:
+      type: object
+      properties:
+        _id:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        message:
+          type: string
+        markAsRead:
+          type: boolean
+        createdAt:
+          type: number
+paths:
+  /auth/is:
+    get:
+      summary: check if user is logged in to his account
+      tags:
+      - users
+      responses:
+        '200':
+          description: an answer 'yes' or 'no'
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                logged in:
+                  value: yes
+                not logged in:
+                  value: no
+  /auth/logout:
+    get:
+      summary: log user out of his account
+      tags:
+      - users
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: user is not logged in
+  /auth/profile:
+    get:
+      summary: get user profile
+      tags:
+      - users
+      responses:
+        '200':
+          description: user profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  country:
+                    type: string
+                  birth:
+                    type: string
+                  status:
+                    type: string
+                  image:
+                    type: string
+        '404':
+          description: user is not logged in
+  /auth/login:
+    post:
+      summary: login to user account
+      description: the user credentials will be saved in a session
+      tags:
+      - users
+      responses:
+        '200':
+          description: user logged in
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                success:
+                  value: logged in successfully
+        '400':
+          description: failed to login
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                user dose not exist:
+                  value: incorrect email
+                bad password:
+                  value: incorrect password
+        '404':
+          description: user is logged in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: a valid email address
+                password:
+                  type: string
+                  description: a sha256 hash of the password
+                remember_me:
+                  type: boolean
+                  description: a 'true' value will keep the session alive for longer
+              required: 
+                - email
+                - password
+  /auth/signup:
+    post:
+      summary: register an account
+      tags:
+      - users
+      responses:
+        '200':
+          description: account was created
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                success:
+                  value: signup was successful
+        '400':
+          description: failed to register
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                formatting:
+                  value: name, email or password are not formatted correctly
+                email is already used:
+                  value: email is being used already
+        '404':
+          description: user is logged in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: a name for the user
+                email:
+                  type: string
+                  description: a valid email address
+                password:
+                  type: string
+                  description: a sha256 hash of the password
+              required: 
+                - name
+                - email
+                - password
+  /auth/request_password_reset:
+    get:
+      summary: reset account password via a link sent to the user email
+      tags:
+      - users
+      parameters:
+        - in: query
+          description: the user email address
+          name: email
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: link was sent to the email
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                success:
+                  value: password reset mail sent
+        '400':
+          description: failed to send link
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no user with this email:
+                  value: email dose not exist
+        '404':
+          description: user is logged in
+  /auth/reset_password:
+    put:
+      summary: reset account password
+      tags:
+      - users
+      parameters:
+        - in: query
+          description: the authentication code sent in the mail
+          name: code
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+                  description: a sha256 hash of the password
+              required: 
+                - password
+      responses:
+        '200':
+          description: account password was reset successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                success:
+                  value: password changed
+        '400':
+          description: failed to reset account password
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                password field is missing:
+                  value: password is required
+                invalid code:
+                  value: password reset code dose not exist or has been expired
+        '404':
+          description: user is logged in
+  /contact:
+    post:
+      summary: contact support
+      tags:
+      - contact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: sender name
+                email:
+                  type: string
+                  description: sender email
+                message:
+                  type: string
+                  description: sender message
+              required: 
+                - user
+                - email
+                - message
+      responses:
+        '200':
+          description: message was sent to support successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                success:
+                  value: message was sent
+        '400':
+          description: faild to send message
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                formatting:
+                  value: name, email or message are not formatted correctly
+    get:
+      summary: get all contacts
+      tags:
+      - contact
+      parameters:
+        - in: query
+          description: filter contacts by acknowledge
+          name: acknowledge
+          schema:
+            type: boolean
+          required: false
+        - in: query
+          description: filter contacts by date range
+          name: from_date
+          schema:
+            type: string
+          required: false
+        - in: query
+          description: filter contacts by date range
+          name: to_date
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: contacts data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  description: contact
+                  type: object
+                  properties:
+                    _id:
+                      type: string
+                      description: the contact id
+                    name:
+                      type: string
+                      description: sender name
+                    email:
+                      type: string
+                      description: sender email
+                    message:
+                      type: string
+                      description: sender message
+                    createdAt:
+                      type: string
+                      description: date the message was created
+                    updatedAt:
+                      type: string
+                      description: date the message was last acknowledged
+  /contact/acknowledge:
+    put:
+      summary: acknowledge contact
+      tags:
+      - contact
+      parameters:
+        - in: query
+          description: contact id
+          name: id
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: contact was acknowledge
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                id missing:
+                  value: contact [id] was acknowledged
+        '400':
+          description: missing parameters
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                id missing:
+                  value: contact id is missing
+  /games/list:
+    get:
+        summary: get a list of all gamers
+        tags:
+        - games
+        parameters:
+          - in: query
+            description: offset from start
+            name: offset
+            schema:
+              type: number
+            required: false
+          - in: query
+            description: the number of games in the result, maximum is 100, minimum is 1, if not defined will return 10.
+            name: length
+            schema:
+              type: number
+            required: false
+        responses:
+          '200':
+            description: list of games
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/game'
+          '400':
+            description: input error
+            content:
+              text/plain:
+                schema:
+                  type: string
+                examples:
+                  length is invalid:
+                    value: "'length' must be between 1 and 100"
+                  offset is invalid:
+                    value: "'offset' must be a positive integer or 0"
+  /games/random:
+    get:
+      summary: get random games
+      tags:
+      - games
+      responses:
+        '200':
+          description: list of games
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/game'
+  /games/cover/{name}:
+    get:
+      summary: get game info
+      tags:
+      - games
+      parameters:
+        - in: path
+          description: name of the game
+          name: name
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: game cover image
+          content:
+            image/jpg:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: missing parameters
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                name missing:
+                  value: game name is missing
+        '404':
+          description: game not found
+  /games/info:
+    get:
+      summary: get game info
+      tags:
+      - games
+      parameters:
+        - in: query
+          description: name of the game
+          name: name
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: game info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/game'
+        '400':
+          description: missing parameters
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                name missing:
+                  value: game name is missing
+        '404':
+          description: game not found
+  /games/autoComplete:
+    get:
+      summary: gets games that start with the name givin
+      tags:
+      - games
+      parameters:
+        - in: query
+          description: prefix to name of a game
+          name: name
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: games info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/game'
+        '400':
+          description: missing parameters
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                name missing:
+                  value: game name is missing
+  /room/chat:
+    get:
+      summary: socket io server link for the chat service
+      description: the server will check if the room exist and if the user has access rights, if not he will close the connection. <br>
+                  a status will be sent to the client on port 'status' indicating that the user can or<br>
+                  cant add messages to this chat - either 'allowed to chat' or 'not allowed to chat'.<br>
+                  after that the server will send to the client some previous messages that where sent in the chat<br>
+                  the client should listen on 'message' and 'more' port to receive messages.<br>
+                  when the client want to send a message he need to do it on port 'message', the request should contain a message string.<br>
+                  when the client want to receive older messages he need to do it on port 'more', the request should contain an index of the last message(the message 'seq' field).<br>
+                  older messages will be sent on 'more' port, and new + start messages on 'message' port.<br>
+                  if on 'more' port you get an empty array of messages, that mean there are no more older messages.<br>
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: room
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: connection established
+  /room/list-all:
+    get:
+      summary: get a list of all rooms
+      description: rooms are sorted by the time they where created
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: offset from the last room added
+          name: offset
+          schema:
+            type: number
+          required: false
+        - in: query
+          description: the number of rooms in the result, maximum is 100, minimum is 1, if not defined will return 10.
+          name: length
+          schema:
+            type: number
+          required: false
+      responses:
+        '200':
+          description: list of the user rooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/room"
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                length is invalid:
+                  value: "'length' must be between 1 and 100"
+                offset is invalid:
+                  value: "'offset' must be a positive integer or 0"
+  /room/list:
+    get:
+      summary: get a list of rooms that the user created or joined
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: user id of the user who created the room, if none specified the logged user id will be used
+          name: userId
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: list of the user rooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/room"
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                the specified user not found:
+                  value: user not found
+                user id was not specified and no user is logged in:
+                  value: no specified user id
+  /room/:
+    post:
+      summary: create a room
+      tags:
+      - rooms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                game:
+                  type: string
+                  description: room only accept games from the official games list
+                platform:
+                  type: string
+                  description: only accept on of *case-sensitive* - Pc, Xbox, Playstation, Android, Apple, Psp
+                description:
+                  type: string
+                private:
+                  type: boolean
+              required: 
+                - name
+                - game
+                - platform
+      responses:
+        '200':
+          description: room was created
+          content:
+            plain/text:
+              schema:
+                type: string
+                description: the created room id
+        '400':
+          description: input validation
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                formatting:
+                  value: name, game, platform, description or private are not formatted correctly
+        '404':
+          description: user is not logged in
+    get:
+      summary: get a room by its id
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: the room with the specified id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/room"
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                the specified room not found:
+                  value: room not found
+                room id is required:
+                  value: no specified room id
+    delete:
+      summary: delete a room by its id
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: the room was deleted
+        '403':
+          description: room dose not exist or user has no permission to delete room
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                exist or permission:
+                  value: room dose not exist or user have no permission to delete it
+        '404':
+          description: user is not logged in
+    put:
+      summary: edit a room by its id
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                game:
+                  type: string
+                platform:
+                  type: string
+                description:
+                  type: string
+                private:
+                  type: boolean
+      responses:
+        '200':
+          description: saved changes
+        '403':
+          description: room dose not exist or user has no permission to edit room
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                exist or permission:
+                  value: room dose not exist or user have no permission to delete it
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                formatting:
+                  value: name, game, platform, description or private are not formatted correctly
+        '404':
+          description: user is not logged in
+  /room/members:
+    get:
+      summary: list room members
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: list of room members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    userId:
+                      type: string
+                    email:
+                      type: string
+                    name:
+                      type: string
+                    image:
+                      type: string
+        '403':
+          description: user has no access to view this content
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                access:
+                  value: user have no access permissions to this room
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no room id:
+                  value: no specified room id
+                room dose not exist:
+                  value: room not found
+    post:
+      summary: add the current user as a member to a room
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: current user was added as a member to this room
+        '403':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                already a member:
+                  value: user is a member of this room
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no room id:
+                  value: no specified room id
+                room dose not exist:
+                  value: room not found
+        '404':
+          description: user is not logged in
+    delete:
+      summary: remove the current user as a member from this room, for the creator of the room to leave the room he need to delete it completely.
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      responses:
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no room id:
+                  value: no specified room id
+                room dose not exist:
+                  value: room not found
+        '403':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                not a member:
+                  value: user is not a member of this room
+                user is the owner:
+                  value: user is the owner of this room
+        '404':
+          description: user is not logged in
+  /room/members/kick:
+    delete:
+      summary: remove the user from this room, for the creator of the room to leave the room he need to delete it completely.
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+      responses:
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no room id:
+                  value: no specified room id
+                room dose not exist:
+                  value: room not found
+                kick room creator:
+                  value: room creator cannot kick himself
+        '403':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                not a member:
+                  value: user is not a member of this room
+                user is not the owner:
+                  value: user is not the owner of this room
+        '404':
+          description: user is not logged in
+  /room/is-member:
+    get:
+      summary: check if user is a member of a room
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: user is a member of this room
+        '403':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                not a member:
+                  value: user is not a member of this room
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no room id:
+                  value: no specified room id
+                room dose not exist:
+                  value: room not found
+        '404':
+          description: user is not logged in
+  /room/announcements:
+    get:
+      summary: list room announcements
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: list of room announcements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    _id:
+                      type: string
+                    roomId:
+                      type: string
+                    message:
+                      type: string
+        '403':
+          description: user has no access to view this content
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                access:
+                  value: user have no access permissions to this room
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no room id:
+                  value: no specified room id
+                room dose not exist:
+                  value: room not found
+    post:
+      summary: add an announcement to a room, only the owner is allowed to post announcements.
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+              required: 
+                - message
+      responses:
+        '200':
+          description: announcement has been posted
+        '403':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                not a member:
+                  value: user is not a member of this room
+                not the owner:
+                  value: user is not the owner of this room
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no room id:
+                  value: no specified room id
+                room dose not exist:
+                  value: room not found
+        '404':
+          description: user is not logged in
+    delete:
+      summary: delete announcement 
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                announcementId:
+                  type: string
+              required: 
+                - announcementId
+      responses:
+        '200':
+          description: announcement has been removed
+        '403':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                not a member:
+                  value: user is not a member of this room
+                not the owner:
+                  value: user is not the owner of this room
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no room id:
+                  value: no specified room id
+                room dose not exist:
+                  value: room not found
+        '404':
+          description: user is not logged in
+  /room/schedule:
+    get:
+      summary: list room schedules
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: list of room schedules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    _id:
+                      type: string
+                    roomId:
+                      type: string
+                    fromDate:
+                      type: string
+                    toDate:
+                      type: string
+        '403':
+          description: user has no access to view this content
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                access:
+                  value: user have no access permissions to this room
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no room id:
+                  value: no specified room id
+                room dose not exist:
+                  value: room not found
+    post:
+      summary: add a schedule to a room, only the owner is allowed to post schedules.
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fromDate:
+                  type: string
+                toDate:
+                  type: string
+              required: 
+                - fromDate
+                - toDate
+      responses:
+        '200':
+          description: schedule has been posted
+        '403':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                not a member:
+                  value: user is not a member of this room
+                not the owner:
+                  value: user is not the owner of this room
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no room id:
+                  value: no specified room id
+                room dose not exist:
+                  value: room not found
+        '404':
+          description: user is not logged in
+    delete:
+      summary: delete schedule 
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scheduleId:
+                  type: string
+              required: 
+                - scheduleId
+      responses:
+        '200':
+          description: schedule has been removed
+        '403':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                not a member:
+                  value: user is not a member of this room
+                not the owner:
+                  value: user is not the owner of this room
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no room id:
+                  value: no specified room id
+                room dose not exist:
+                  value: room not found
+        '404':
+          description: user is not logged in
+  /search/rooms:
+    get:
+      summary: search for rooms
+      tags:
+      - Search
+      parameters:
+        - in: query
+          description: room name or part of it
+          name: name
+          schema:
+            type: string
+          required: false
+        - in: query
+          description: room game
+          name: game
+          schema:
+            type: string
+          required: false
+        - in: query
+          description: room minimum participates number
+          name: min_participates
+          schema:
+            type: number
+          required: false
+        - in: query
+          description: room maximum participates number
+          name: max_participates
+          schema:
+            type: number
+          required: false
+        - in: query
+          description: room game platform
+          name: platform
+          schema:
+            type: string
+          required: false
+        - in: query
+          description: offset results by number
+          name: skip
+          schema:
+            type: number
+          required: false
+        - in: query
+          description: limit results number
+          name: limit
+          schema:
+            type: number
+          required: false
+      responses:
+        '200':
+          description: filtered list of rooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/room'
+  /search/peoples:
+    get:
+      summary: search for peoples
+      tags:
+      - Search
+      parameters:
+        - in: query
+          description: person name or part of it
+          name: name
+          schema:
+            type: string
+          required: false
+        - in: query
+          description: person who plays that game
+          name: game
+          schema:
+            type: string
+          required: false
+        - in: query
+          description: person who plays a game on that platform
+          name: platform
+          schema:
+            type: string
+        - in: query
+          description: person country
+          name: country
+          schema:
+            type: string
+          required: false
+        - in: query
+          description: offset results by number
+          name: skip
+          schema:
+            type: number
+          required: false
+        - in: query
+          description: limit results number
+          name: limit
+          schema:
+            type: number
+          required: false
+      responses:
+        '200':
+          description: filtered list of peoples
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/profile'
+  /profile/games:
+    get:
+      summary: list profile games
+      tags:
+      - profiles
+      parameters:
+        - in: query
+          description: user id, if none provided the current sign in user will be used 
+          name: userId
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: list of profile games
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    _id:
+                      type: string
+                    game:
+                      type: string
+                    platform:
+                      type: string
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no user id:
+                  value: no specified user id
+                user dose not exist:
+                  value: user not found
+    post:
+      summary: add a game to current sign in user profile
+      tags:
+      - profiles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                platform:
+                  type: string
+              required: 
+                - name
+                - platform
+      responses:
+        '200':
+          description: game has been saved
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                game dose not exist:
+                  value: game not found
+                platform dose not exist or badly formatted:
+                  value: platform not found
+        '404':
+          description: user is not logged in
+    delete:
+      summary: delete a game from current sign in user profile
+      tags:
+      - profiles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameId:
+                  type: string
+              required: 
+                - gameId
+      responses:
+        '200':
+          description: game has been removed
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                game dose not exist:
+                  value: game not found
+        '404':
+          description: user is not logged in
+  /profile/friends:
+    get:
+      summary: list profile friends
+      tags:
+      - profiles
+      parameters:
+        - in: query
+          description: user id, if none provided the current sign in user will be used
+          name: userId
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: list of profile friends
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    _id:
+                      type: string
+                    name:
+                      type: string
+                    email:
+                      type: string
+                    image:
+                      type: string
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no user id:
+                  value: no specified user id
+                user dose not exist:
+                  value: user not found
+    post:
+      summary: add a friend to the current user profile
+      tags:
+      - profiles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                friendUserEmail:
+                  type: string
+              required: 
+                - name
+      responses:
+        '200':
+          description: friend has been saved
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                friend dose not exist:
+                  value: friend not found
+        '404':
+          description: user is not logged in
+    delete:
+      summary: delete friend from the current user profile
+      tags:
+      - profiles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                friendId:
+                  type: string
+              required: 
+                - friendId
+      responses:
+        '200':
+          description: friend has been removed
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                friend dose not exist:
+                  value: friend not found
+        '404':
+          description: user is not logged in
+  /profile:
+    get:
+      summary: get user profile
+      tags:
+      - profiles
+      parameters:
+        - in: query
+          description: user id, if none provided the current sign in user will be used
+          name: userId
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: profile info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/profile'
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no user id:
+                  value: no specified user id
+                user dose not exist:
+                  value: user not found
+    put:
+      summary: edit the current sign in user profile
+      tags:
+      - profiles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                birthday:
+                  type: string
+                country:
+                  type: string
+                status:
+                  type: string
+                image:
+                  type: string
+      responses:
+        '200':
+          description: changes has been saved
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                input formatting issues:
+                  value: image, name, birthday, country or status are not formatted correctly
+        '404':
+          description: user is not logged in
+  /profile/image/{userId}:
+    get:
+      summary: get user profile image
+      tags:
+      - profiles
+      parameters:
+        - in: path
+          description: user id
+          name: userId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: changes has been saved
+          content:
+            image/jpg:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no user id:
+                  value: no specified user id
+  /profile/autoComplete:
+    get:
+      summary: gets profiles with email that start with the name givin
+      tags:
+      - profiles
+      parameters:
+        - in: query
+          description: prefix to profile email
+          name: email
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: profiles info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/profile'
+        '400':
+          description: missing parameters
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                name missing:
+                  value: profile email is missing
+  /room/invites:
+    get:
+      summary: check if invite exist
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+        - in: query
+          description: invite code
+          name: code
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: invite exist
+        '403':
+          description: user has no access to view this content
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                invite:
+                  value: user have no invite to this room
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no room id:
+                  value: no specified room id
+                room dose not exist:
+                  value: room not found
+        '404':
+          description: user is not logged in
+    post:
+      summary: invite a user to this room, only the owner is allowed to invite other users.
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userEmail:
+                  type: string
+              required: 
+                - userEmail
+      responses:
+        '200':
+          description: invite was givin to the user
+        '403':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                not a member:
+                  value: user is not a member of this room
+                not the owner:
+                  value: user is not the owner of this room
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no room id:
+                  value: no specified room id
+                room dose not exist:
+                  value: room not found
+                invalid user email:
+                  value: user with that email not found
+        '404':
+          description: user is not logged in
+    delete:
+      summary: delete invite 
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                inviteId:
+                  type: string
+              required: 
+                - inviteId
+      responses:
+        '200':
+          description: invite has been removed
+        '403':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                not a member:
+                  value: user is not a member of this room
+                not the owner:
+                  value: user is not the owner of this room
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no room id:
+                  value: no specified room id
+                room dose not exist:
+                  value: room not found
+                exists:
+                  value: invite dose not exist
+        '404':
+          description: user is not logged in
+    put:
+      summary: change the user invite status
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+        - in: query
+          description: invite code
+          name: code
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accepted:
+                  type: boolean
+              required: 
+                - accepted
+      responses:
+        '200':
+          description: invite was givin to the user
+        '403':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                not a member:
+                  value: user is not a member of this room
+                not the owner:
+                  value: user is not the owner of this room
+                invite:
+                  value: user have no invite to this room
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no room id:
+                  value: no specified room id
+                room dose not exist:
+                  value: room not found
+                missing parameters:
+                  value: missing parameters
+        '404':
+          description: user is not logged in
+  /room/invites/list:
+    get:
+      summary: list invites for this room
+      tags:
+      - rooms
+      parameters:
+        - in: query
+          description: room id
+          name: roomId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: list of room invites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    userId:
+                      type: string
+                    email:
+                      type: string
+                    name:
+                      type: string
+                    code:
+                      type: string
+                    image:
+                      type: string
+                    accepted:
+                      type: boolean
+        '403':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                not a member:
+                  value: user is not a member of this room
+                not the owner:
+                  value: user is not the owner of this room
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                no room id:
+                  value: no specified room id
+                room dose not exist:
+                  value: room not found
+                exists:
+                  value: invite dose not exist
+        '404':
+          description: user is not logged in
+  /notification/:
+    get:
+      summary: list notifications for current user
+      tags:
+      - notifications
+      parameters:
+        - in: query
+          description: max number of results
+          name: length
+          schema:
+            type: number
+          required: false
+        - in: query
+          description: offset results by amount
+          name: offset
+          schema:
+            type: number
+          required: false
+        - in: query
+          description: filter notifications by marked as read or not read
+          name: notReadYet
+          schema:
+            type: boolean
+          required: false
+      responses:
+        '200':
+          description: list of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items: 
+                    $ref: '#/components/schemas/notification'
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                notReadYet syntax:
+                  value: "'notReadYet' need to be a boolean"
+                length syntax:
+                  value: "'length' must be between 1 and 100"
+                offset syntax:
+                  value: "'offset' must be a positive integer or 0"
+        '404':
+          description: user is not logged in
+    post:
+      summary: send message to another user
+      tags:
+      - notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                toUserId:
+                  type: string
+                message:
+                  type: string
+              required: 
+                - toUserId
+                - message
+      responses:
+        '200':
+          description: message was sent
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                unknown user:
+                  value: user not found
+        '404':
+          description: user is not logged in
+    delete:
+      summary: delete notifications
+      tags:
+      - notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                listIds:
+                  type: array
+                  items:
+                    type: string
+              required: 
+                - listIds
+      responses:
+        '200':
+          description: notifications where deleted
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                listIds syntax:
+                  value: "'listIds' need to be an array of ids"
+        '404':
+          description: user is not logged in
+  /notification/mark-as-read:
+    put:
+      summary: mark notifications as read
+      tags:
+      - notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                listIds:
+                  type: array
+                  items:
+                    type: string
+              required: 
+                - listIds
+      responses:
+        '200':
+          description: notifications where marked
+        '400':
+          description: input error
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                listIds syntax:
+                  value: "'listIds' need to be an array of ids"
+        '404':
+          description: user is not logged in
