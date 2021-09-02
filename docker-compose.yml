@@ -28,7 +28,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        APP_BUILD_SERVER_URL=http://localhost
+        - APP_BUILD_SERVER_URL=http://localhost
     restart: always
     ports:
       - 80:80
@@ -37,11 +37,12 @@ services:
       DB_NAME: gamers_social_media
       DB_USER: root
       DB_PASSWORD: dhgsye3gkdghwegd3ud23du
-      SMTP_EXIST: true
+      SMTP_EXIST: "true"
       SMTP_SERVER: smtp
       SMTP_PORT: 25
       SERVER_URL: http://localhost
       CLIENT_URL: http://localhost
+      SESSION_SECRET: 32eyh392eyd89539deuq2doy3u298yd938r
     networks:
       - gnetwork
 

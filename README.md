@@ -1,4 +1,7 @@
-# Gaming-Social-Media
+# Gaming Social Media
+
+a social media website for video games players.  
+the website allow people to chat, create private and public rooms and schedule playing time.  
 
 ## requirement
 
@@ -14,18 +17,18 @@ cd server
 npm install  
 ```  
 
-#### recommended vscode extensions 
-swagger editor  
-https://marketplace.visualstudio.com/items?itemName=42Crunch.vscode-openapi  
-eslint  
-https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint  
-
 ## developent  
-run the server by useing `nodemon` command or `npm start` in the server directory.  
-the client can be started with `npm start` in the clinet directory.  
+run the server by using `nodemon` command or `npm start` in the server directory.  
+the client can be started with `npm start` in the client directory.  
 
 # deployment  
-single line using docker
+configure your setup with docker then use the following command to start it up 
 ```  
 docker-compose up
 ```  
+
+### ScreenShot
+
+![tracking app](https://raw.githubusercontent.com/pcx229/gamers-network/master/screenshot.png)
+
+
