@@ -590,7 +590,9 @@ paths:
                   when the client want to send a message he need to do it on port 'message', the request should contain a message string.<br>
                   when the client want to receive older messages he need to do it on port 'more', the request should contain an index of the last message(the message 'seq' field).<br>
                   older messages will be sent on 'more' port, and new + start messages on 'message' port.<br>
-                  if on 'more' port you get an empty array of messages, that mean there are no more older messages.<br>
+                  if on 'more' port you get an empty array of messages, that means there are no more older messages.<br>
+                  the client should listen on 'user-joined' and 'user-left' to check whet room members are currently active in the chat room.<br>
+                  'user-joined' will return a user id or list of users that are connected, 'user-left' will only return one user that left at a time.<br>
       tags:
       - rooms
       parameters:
