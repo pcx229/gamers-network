@@ -11,8 +11,8 @@ export function ChatSocket(room) {
 	})
 
 	return {
-		SendMessage(message) {
-			socket.emit('message', message)
+		SendMessage(message, response) {
+			socket.emit('message', message, response)
 		},
 		GetMore(index) {
 			socket.emit('more', index)
@@ -48,6 +48,28 @@ export function ChatSocket(room) {
 		},
 		RemoveOnMoreListener(callback) {
 			socket.off('more', callback)
+		},
+		OnActiveMembersChangedListener(members) {
+			members.list = []
+			members.callback_joined = (activeMembers) => {
+				if(Array.isArray(activeMembers)) {
+					members.list = [ ...activeMembers, ...members.list]
+				} else {
+					members.list = [ activeMembers, ...members.list]
+				}
+				members.list = Array.from(new Set(members.list))
+				members.callback(members.list)
+			}
+			members.callback_left = (activeMember) => {
+				members.list = members.list.filter(m => (m !== activeMember))
+				members.callback(members.list)
+			}
+			socket.on('user-joined', members.callback_joined)
+			socket.on('user-left', members.callback_left)
+		},
+		RemoveOnActiveMembersChangedListener(members) {
+			socket.off('user-joined', members.callback_joined)
+			socket.off('user-left', members.callback_left)
 		},
 		Disconnect() {
 			socket.disconnect()

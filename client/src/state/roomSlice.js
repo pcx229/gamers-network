@@ -220,6 +220,16 @@ export const deleteInvite = createAsyncThunk('room/deleteInvite', async (inviteI
 	}
 })
 
+export const actionActiveMembersChanged = createAsyncThunk('room/actionActiveMembersChanged', async (activeMembers, thunkApi) => {
+	try {
+		const roomId =  thunkApi.getState().room.roomId
+		const members = (await roomMembers(roomId)).data
+		return {members, activeMembers}
+	} catch (err) {
+		thunkApi.rejectWithValue(err.response.data)
+	}
+})
+
 const initialState = {
 	roomId: undefined,
 	userId: undefined,
@@ -233,6 +243,7 @@ const initialState = {
 	isMember: undefined,
 	isPrivate: undefined,
 	members: undefined,
+	activeMembers: undefined,
 	announcements: undefined,
 	schedules: undefined,
 	invites: undefined,
@@ -417,6 +428,15 @@ const roomSlice = createSlice({
 		[actionEditRoom.rejected]: (state, action) => {
 			state.error = action.payload
 			state.loading = false
+		},
+
+		[actionActiveMembersChanged.fulfilled]: (state, action) => {
+			const {members, activeMembers} = action.payload
+			state.members = members
+			state.activeMembers = activeMembers
+		},
+		[actionActiveMembersChanged.rejected]: (state, action) => {
+			state.error = action.payload
 		},
 	},
 })

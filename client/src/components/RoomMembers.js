@@ -1,6 +1,6 @@
 
 import React, {useState} from 'react'
-import { Box, Chip, Divider, Icon, IconButton, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, Typography} from '@material-ui/core'
+import { Badge, Box, Chip, Divider, Icon, IconButton, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, Typography} from '@material-ui/core'
 import {makeStyles} from '@material-ui/core/styles'
 import {useSelector, useDispatch} from 'react-redux'
 import {selectRoom, actionKickUser} from '../state/roomSlice'
@@ -30,8 +30,10 @@ const useStyles = makeStyles(() => ({
 function RoomMembers() {
 	const classes = useStyles()
 
-	const {userId, creator, members, isOwner, isPrivate} = useSelector(selectRoom)
+	const {userId, creator, members, activeMembers, isOwner, isPrivate} = useSelector(selectRoom)
 	const dispatch = useDispatch()
+
+	const activeMembersSet = new Set(activeMembers)
 
 	const [openInviteDialog, setOpenInviteDialog] = useState(false)
 
@@ -59,7 +61,18 @@ function RoomMembers() {
 						<React.Fragment key={m.userId}>
 							<ListItem>
 								<ListItemAvatar>
-									<UserAnimalAvatar className={classes.memberImage} size={'40px'} username={m.name} src={m.image} />
+									<Badge
+										anchorOrigin={{
+											vertical: 'bottom',
+											horizontal: 'right',
+										}}
+										badgeContent=" " 
+										variant="dot"
+										color="secondary"
+										invisible={!activeMembers || !activeMembersSet.has(m.userId)}
+									>
+										<UserAnimalAvatar className={classes.memberImage} size={'40px'} username={m.name} src={m.image} />
+									</Badge>
 								</ListItemAvatar>
 								<ListItemText 
 									primary={m.name} />
