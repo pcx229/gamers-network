@@ -110,6 +110,7 @@ function RoomChat({roomId}) {
 	const [imageToUploadUrl, setImageToUploadUrl] = useState(undefined)
 	const [imageDropAreaVisible, setImageDropAreaVisible] = useState(false)
 	function uploadImageFile(file) {
+		if(!isMember) return
 		if(file) {
 			if(file.size > 5000000) {
 				alert('maximum image upload size is 5mb')
