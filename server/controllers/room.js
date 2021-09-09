@@ -333,7 +333,7 @@ exports.removeMember = async function (req, res, next) {
 }
 
 exports.kickMember = async function (req, res, next) {
-	const ownerUserId = req.user.id
+	//const ownerUserId = req.user.id
 	const { roomId } = req.query
 	const { userId } = req.body
 	// creator cannot kick himself
