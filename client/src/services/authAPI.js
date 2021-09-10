@@ -24,8 +24,8 @@ export function forgotPassword(email) {
 
 export function resetPassword(code, password) {
 	if (password) {
-		return axios.post('/auth/reset_password', {password: sha256(password).toString()}, {params: {code}})
+		return axios.put('/auth/reset_password', {password: sha256(password).toString()}, {params: {code}})
 	} else {
-		return axios.post('/auth/reset_password', {}, {params: {code}})
+		return axios.put('/auth/reset_password', {}, {params: {code}})
 	}
 }

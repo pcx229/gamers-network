@@ -7,7 +7,11 @@ if(process.env.SMTP_EXIST && process.env.SMTP_EXIST != 'false') {
 	transporter = nodemailer.createTransport({
 		host: process.env.SMTP_SERVER,
 		port: process.env.SMTP_PORT,
-		secure: false
+		secure: false,
+		auth: process.env.SMTP_USER ? {
+			user: process.env.SMTP_USER,
+			pass: process.env.SMTP_PASS,
+		} : undefined
 	})
 }
 

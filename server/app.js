@@ -65,7 +65,7 @@ app.use(express.static(path.join(__dirname, 'public')))
 // auth
 var passport = require('passport'),
 	LocalStrategy = require('passport-local').Strategy
-var User = require('./models/user')
+var {User} = require('./models/user')
 
 passport.use(new LocalStrategy({
 	usernameField: 'email',

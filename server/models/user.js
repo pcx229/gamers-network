@@ -2,6 +2,7 @@
 var mongoose = require('mongoose')
 var SHA256 = require('crypto-js/sha256')
 var random = require('random')
+var randomstring = require('randomstring')
 random.use(Math.random)
 
 const userSchema = new mongoose.Schema({
@@ -55,4 +56,34 @@ User.deserializeUser = function (user, done) {
 	done(null, JSON.parse(user))
 }
 
-module.exports = User
+const RESET_PASSWORD_LINK_EXPIRE_TIME_MINUTES = 30
+const RESET_PASSWORD_CODE_LENGTH = 64
+
+const userPasswordResetSchema = new mongoose.Schema({
+	userId: { 
+		type: mongoose.Schema.Types.ObjectId, 
+		ref: 'User',
+		require: true
+	},
+	email: {
+		type: String,
+		require: true
+	},
+	code: {
+		type: String,
+		require: true
+	}
+})
+
+userPasswordResetSchema.methods.generateCode = function () {
+	this.code = randomstring.generate(RESET_PASSWORD_CODE_LENGTH)
+}
+
+userPasswordResetSchema.index({ 'createdAt': 1 }, { expireAfterSeconds: RESET_PASSWORD_LINK_EXPIRE_TIME_MINUTES * 60 })
+
+module.exports = {
+	User,
+	PasswordReset: mongoose.model('Password_Reset', userPasswordResetSchema),
+	RESET_PASSWORD_LINK_EXPIRE_TIME_MINUTES,
+	RESET_PASSWORD_CODE_LENGTH
+}

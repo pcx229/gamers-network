@@ -3,9 +3,9 @@
 var mongoose = require('mongoose')
 var passport = require('passport')
 var { StatusCodes } = require('http-status-codes')
-var User = require('../models/user')
+var { PasswordReset, User } = require('../models/user')
 var {Profile} = require('../models/profile')
-const { sendResetPasswordMail, hasPasswordResetLink, removePasswordResetLink } = require('../util/reset_password_mail')
+const { sendResetPasswordMail } = require('../util/reset_password_mail')
 var Joi = require('joi')
 
 exports.login = function (req, res, next) {
@@ -69,15 +69,20 @@ exports.signup = async function (req, res, next) {
 	}
 }
 
+
 exports.request_password_reset = async function (req, res, next) {
 	const { email } = req.query
 	try {
 		// check if user exist
-		if (!email || !await User.findOne({ email }).exec()) {
+		const user = await User.findOne({ email }).exec()
+		if (!email || !user) {
 			return res.status(StatusCodes.BAD_REQUEST).send('email dose not exist')
 		}
 		// send reset link to email
-		sendResetPasswordMail(email)
+		let request = new PasswordReset({userId: new mongoose.Types.ObjectId(user._id), email})
+		request.generateCode()
+		await request.save()
+		sendResetPasswordMail(email, request.code)
 		return res.status(StatusCodes.OK).send('password reset mail sent')
 	} catch (err) {
 		return next(err)
@@ -87,9 +92,9 @@ exports.request_password_reset = async function (req, res, next) {
 exports.reset_password = async function (req, res, next) {
 	const { code } = req.query
 	const { password } = req.body
-	let email = hasPasswordResetLink(code)
+	const request = await PasswordReset.findOne({code}).exec()
 	// check code exist
-	if (!code || !email) {
+	if (!code || !request) {
 		return res.status(StatusCodes.BAD_REQUEST).send('password reset code dose not exist or has been expired')
 	}
 	// check password exist
@@ -98,8 +103,8 @@ exports.reset_password = async function (req, res, next) {
 	}
 	// change password
 	try {
-		removePasswordResetLink(code)
-		let user = await User.findOne({ email }).exec()
+		await PasswordReset.deleteOne({ code }).exec()
+		let user = await User.findOne({ _id: new mongoose.Types.ObjectId(request.userId) }).exec()
 		user.setPassword(password)
 		await user.save()
 		return res.status(StatusCodes.OK).send('password changed')
