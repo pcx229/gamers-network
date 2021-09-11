@@ -110,7 +110,7 @@ function RoomChat({roomId}) {
 	const [imageToUploadUrl, setImageToUploadUrl] = useState(undefined)
 	const [imageDropAreaVisible, setImageDropAreaVisible] = useState(false)
 	function uploadImageFile(file) {
-		if(!isMember) return
+		if(!allowedToChat) return
 		if(file) {
 			if(file.size > 5000000) {
 				alert('maximum image upload size is 5mb')
@@ -374,16 +374,20 @@ function RoomChat({roomId}) {
 					: 
 					<FilledInput 
 						onDragEnter={(event) => {
-							setImageDropAreaVisible(true)
-							event.stopPropagation()
-							event.preventDefault()
+							if(allowedToChat) {
+								setImageDropAreaVisible(true)
+								event.stopPropagation()
+								event.preventDefault()
+							}
 						}}
 						onPaste={(event) => {
-							var items = event.clipboardData.items
-							for (var i = 0; i < items.length; i++) {
-								if (items[i].type.indexOf('image') == -1) continue
-								var file = items[i].getAsFile()
-								uploadImageFile(file)
+							if(allowedToChat) {
+								var items = event.clipboardData.items
+								for (var i = 0; i < items.length; i++) {
+									if (items[i].type.indexOf('image') == -1) continue
+									var file = items[i].getAsFile()
+									uploadImageFile(file)
+								}
 							}
 						}}
 						fullWidth
@@ -414,6 +418,7 @@ function RoomChat({roomId}) {
 									type="file" 
 									accept="image/*"
 									hidden
+									disabled={!allowedToChat}
 									onClick={(event) => {
 										event.target.value = ''
 										setImageToUploadUrl(undefined)
