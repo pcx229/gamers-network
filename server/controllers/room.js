@@ -339,7 +339,7 @@ exports.kickMember = async function (req, res, next) {
 	// creator cannot kick himself
 	const room = await Room.findOne({ _id: new mongoose.Types.ObjectId(roomId) })
 	if(room.creator === userId) {
-		res.status(StatusCodes.BAD_REQUEST).send('room creator cannot kick himself')
+		return res.status(StatusCodes.BAD_REQUEST).send('room creator cannot kick himself')
 	}
 	// remove member from room
 	await RoomMember.deleteOne({ userId: new mongoose.Types.ObjectId(userId), roomId: new mongoose.Types.ObjectId(roomId) }).exec()
@@ -444,7 +444,7 @@ exports.create = async function (req, res, next) {
 	let room = new Room({ name, creator: new mongoose.Types.ObjectId(userId), game, platform, description, private: (private === true), members: 1 })
 	room = await room.save()
 	// add creator as a member to the room
-	const member = new RoomMember({ roomId: room._id, userId: new mongoose.Types.ObjectId(userId) })
+	const member = new RoomMember({ roomId: new mongoose.Types.ObjectId(room._id), userId: new mongoose.Types.ObjectId(userId) })
 	await member.save()
 	res.status(StatusCodes.OK).send(room._id)
 }
