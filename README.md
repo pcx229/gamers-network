@@ -29,6 +29,9 @@ docker-compose up
 
 ### ScreenShot
 
-![tracking app](https://raw.githubusercontent.com/pcx229/gamers-network/master/screenshot.png)
+![my app](https://raw.githubusercontent.com/pcx229/gamers-network/master/screenshot.png)
+
+
+### [Demo](https://play-together-now.herokuapp.com/)
 
 
